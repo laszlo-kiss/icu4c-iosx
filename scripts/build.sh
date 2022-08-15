@@ -3,6 +3,7 @@ set -e
 ################## SETUP BEGIN
 THREAD_COUNT=$(sysctl hw.ncpu | awk '{print $2}')
 HOST_ARC=$( uname -m )
+TARGET_MACOS_VERSION=$HOST_ARC'-apple-macos10.15'
 XCODE_ROOT=$( xcode-select -print-path )
 ICU_VER=maint/maint-71
 ################## SETUP END
@@ -39,12 +40,21 @@ cp -r $ICU4C_FOLDER $ICU_BUILD_FOLDER
 echo "building icu (mac osx)..."
 pushd $ICU_BUILD_FOLDER/source
 
+#COMMON_CFLAGS="'-target $TARGET_MACOS_VERSION'"
+#COMMON_CXXFLAGS="'--std=c++17 -target $TARGET_MACOS_VERSION'"
+CC="cc -target $TARGET_MACOS_VERSION"
+export CC
+CXX="c++ -target $TARGET_MACOS_VERSION"
+export CXX
 ./runConfigureICU MacOSX --enable-static --disable-shared prefix=$INSTALL_DIR CXXFLAGS="--std=c++17"
 make -j$THREAD_COUNT
 make install
 popd
 touch $ICU_BUILD_FOLDER.success 
 fi
+
+unset CC
+unset CXX
 
 ################### BUILD FOR MAC Catalyst
 ICU_CATALYST_BUILD_FOLDER=$ICU_VER_NAME-catalyst-build
